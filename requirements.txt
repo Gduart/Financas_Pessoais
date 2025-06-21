@@ -1,0 +1,13 @@
+streamlit
+pandas
+supabase
+langchain-openai
+python-dotenv
+altair
+streamlit-echarts
+fpdf2
+matplotlib
+vl-convert-python
+plotly
+prophet
+kaleido
