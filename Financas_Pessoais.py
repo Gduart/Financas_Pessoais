@@ -1,5 +1,4 @@
 # Financas_Pessoais.py
-#streamlit run Financas_Pessoais.py
 import streamlit as st
 import pandas as pd
 from db_manager import carregar_dados, carregar_dados_cartao
