@@ -105,3 +105,5 @@ with col2:
         )
         # Mensagem de erro, consistente com a situação.
         st.error(f"Atenção! Você ultrapassou sua meta em R$ {abs(valor_restante):,.2f}.")
+
+    #Versao2
