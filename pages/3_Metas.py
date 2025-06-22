@@ -1,7 +1,7 @@
 # pages/3_Metas.py
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go  # Usaremos o graph_objects para o gráfico de Gauge
+import plotly.graph_objects as go
 
 # --- Configuração da Página ---
 st.set_page_config(
@@ -14,64 +14,61 @@ st.title("🎯 Acompanhamento de Metas de Gastos")
 st.markdown("---")
 
 # --- Validação e Recuperação de Dados do st.session_state ---
-# Verifica se os dados de despesas existem para fazer os cálculos.
 if 'df_despesas' not in st.session_state or st.session_state.df_despesas.empty:
-    st.warning("Nenhuma despesa encontrada. Por favor, selecione um período com dados na página principal.")
+    st.warning("Nenhuma despesa encontrada. Por favor, selecione um período com dados na página principal para análise.")
     st.stop()
 
-# Recupera o DataFrame de despesas
 df_despesas = st.session_state['df_despesas']
 total_gasto_periodo = df_despesas['valor'].sum()
 
 # --- Definição da Meta de Gastos ---
 st.header("Defina sua Meta")
-
-# Campo para o usuário inserir a meta. O valor padrão é 6400, como solicitado.
 meta_gastos = st.number_input(
     "Defina sua meta máxima de gastos para o período selecionado (R$):",
-    min_value=0.0,
+    min_value=0.01,  # Evita divisão por zero
     value=6000.0,
     step=100.0,
     format="%.2f"
 )
 
 # --- Cálculos de Progresso ---
-if meta_gastos > 0:
-    percentual_atingido = (total_gasto_periodo / meta_gastos) * 100
-    valor_restante = meta_gastos - total_gasto_periodo
-else:
-    percentual_atingido = 0
-    valor_restante = 0
+# CORREÇÃO: Garantindo que não haja divisão por zero
+percentual_atingido = (total_gasto_periodo / meta_gastos) * 100 if meta_gastos > 0 else 0
+valor_restante = meta_gastos - total_gasto_periodo
 
 # --- Visualização com Gráfico de Gauge e KPIs ---
 st.markdown("---")
 st.header("Progresso da Meta")
 
-# Layout para o gráfico e os KPIs
-col1, col2 = st.columns([2, 1.5])  # A primeira coluna é maior para o gráfico
+col1, col2 = st.columns([2, 1.5])
 
 with col1:
-    # Gráfico de Gauge do Plotly
+    # CORREÇÃO: Simplificação do Gauge para maior clareza e consistência
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=total_gasto_periodo,
         domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': "Progresso de Gastos", 'font': {'size': 24}},
-        delta={'reference': meta_gastos, 'increasing': {'color': "#FF4136"}},  # Vermelho se passar da meta
+        title={'text': "Progresso de Gastos (R$)", 'font': {'size': 20}},
+        number={'prefix': "R$ ", 'font': {'size': 48}},
+        delta={
+            'reference': meta_gastos,
+            'increasing': {'color': "#d62728"}, # Vermelho forte quando ultrapassa
+            'decreasing': {'color': "#2ca02c"}  # Verde quando está abaixo
+        },
         gauge={
-            'axis': {'range': [None, meta_gastos], 'tickwidth': 1, 'tickcolor': "darkblue"},
-            'bar': {'color': "#1DB954"},  # Cor da barra de progresso
-            'bgcolor': "white",
+            'axis': {'range': [0, meta_gastos], 'tickwidth': 1, 'tickcolor': "white"},
+            'bar': {'color': "#1f77b4"},  # Azul padrão, mais neutro
+            'bgcolor': "rgba(0,0,0,0.1)",
             'borderwidth': 2,
             'bordercolor': "gray",
             'steps': [
-                {'range': [0, meta_gastos * 0.5], 'color': 'lightgreen'},  # Até 50%
-                {'range': [meta_gastos * 0.5, meta_gastos * 0.8], 'color': 'yellow'},  # Até 80%
-                {'range': [meta_gastos * 0.8, meta_gastos], 'color': 'orange'}  # Acima de 80%
+                {'range': [0, meta_gastos * 0.75], 'color': 'green'},
+                {'range': [meta_gastos * 0.75, meta_gastos * 0.9], 'color': 'yellow'},
+                {'range': [meta_gastos * 0.9, meta_gastos], 'color': 'orange'}
             ],
             'threshold': {
                 'line': {'color': "red", 'width': 4},
-                'thickness': 0.75,
+                'thickness': 0.9,
                 'value': meta_gastos
             }
         }
@@ -84,21 +81,27 @@ with col1:
 
 with col2:
     st.subheader("Análise da Meta")
-    st.metric(label="Total Gasto no Período", value=f"R$ {total_gasto_periodo:,.2f}")
+    st.metric(
+        label="Total Gasto no Período",
+        value=f"R$ {total_gasto_periodo:,.2f}"
+    )
 
+    # CORREÇÃO: Lógica de UX clara e sem contradições
     if valor_restante >= 0:
         st.metric(
             label="Valor Restante para Atingir a Meta",
-            value=f"R$ {valor_restante:,.2f}",
-            delta=f"-{100 - percentual_atingido:,.2f}% do orçamento restante",
-            delta_color="normal"
+            value=f"R$ {valor_restante:,.2f}"
+            # O delta aqui foi removido por ser confuso. O valor principal já passa a informação.
         )
-        st.success(f"Você está dentro do orçamento! Já utilizou {percentual_atingido:,.2f}% da sua meta.")
+        # Mensagem de sucesso, consistente com a situação.
+        st.success(f"Você está dentro do orçamento! Já utilizou {percentual_atingido:.2f}% da sua meta.")
     else:
+        # A lógica para quando a meta é ultrapassada
         st.metric(
-            label="Valor Acima da Meta",
+            label="Valor ACIMA da Meta",
             value=f"R$ {abs(valor_restante):,.2f}",
-            delta=f"{percentual_atingido - 100:,.2f}% acima do orçamento",
-            delta_color="inverse"
+            delta=f"{(percentual_atingido - 100):.2f}% acima do orçamento",
+            delta_color="inverse" # "inverse" mostra vermelho para valores positivos (ruim neste caso)
         )
-        st.error(f"Atenção! Você ultrapassou a sua meta em {abs(valor_restante):,.2f} reais.")
+        # Mensagem de erro, consistente com a situação.
+        st.error(f"Atenção! Você ultrapassou sua meta em R$ {abs(valor_restante):,.2f}.")
