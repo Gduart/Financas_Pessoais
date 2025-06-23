@@ -10,3 +10,4 @@ streamlit
 streamlit-echarts
 supabase
 vl-convert-python
+Prophet
