@@ -1,5 +1,5 @@
 ffmpeg
 libsm6
 libxext6
-chromium-browser
-chromium-chromedriver
+chromium
+chromium-driver
