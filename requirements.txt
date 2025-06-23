@@ -8,4 +8,4 @@ streamlit-echarts
 fpdf2
 matplotlib
 vl-convert-python
-ploty
+plotly
